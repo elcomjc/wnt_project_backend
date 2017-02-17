@@ -8,7 +8,7 @@ var math = require('mathjs');
 
 // create a new redis client and connect to our local redis instance
 var client = redis.createClient();
-var forecastKey = ENV['forecastKey'];
+var forecastKey = process.env.forecastKey;
 
 // if an error occurs, print it to the console
 client.on('error', function (err) {
