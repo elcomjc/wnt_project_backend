@@ -4,11 +4,11 @@ var axios = require('axios');
 var redis = require('redis');
 var bodyParser = require('body-parser');
 var math = require('mathjs');
-var config = require('./env.json');
+// var config = require('./env.json');
 
 // create a new redis client and connect to our local redis instance
 var client = redis.createClient();
-var forecastKey = config.forecastKey;
+var forecastKey = ENV['forecastKey'];
 
 // if an error occurs, print it to the console
 client.on('error', function (err) {
