@@ -3,7 +3,8 @@ var app = require('express')();
 var axios = require('axios');
 var redis = require('redis');
 var bodyParser = require('body-parser');
-var config = require('./env.json')
+var math = require('mathjs');
+var config = require('./env.json');
 
 // create a new redis client and connect to our local redis instance
 var client = redis.createClient();
@@ -20,10 +21,12 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
 function getDataByCityLatLng(lat, lng) {
   var forecastEndPoint = 'https://api.darksky.net/forecast/'+forecastKey+'/'+lat+','+lng;
+  if (math.random(0, 1) < 0.1) throw new Error('How unfortunate! The API Request Failed')
   return axios.get(forecastEndPoint);
 }
 
 app.post('/api/cityLatLng', function(req, res) { 
+
 	var cityKey = req.body.cityKey;
 	var latitude = req.body.lat;
 	var longitude = req.body.lng;
@@ -50,18 +53,28 @@ app.get('/api/getDataByCityLatLng', function(req, res) {
 
   client.hgetall(cityKey, function (err, obj) {
   	if (obj) {
-  		getDataByCityLatLng(obj.latitude, obj.longitude)
-	  	.then(
-	  		function success(response) {
-	  			var jsonResponse = {
-	  				"time": response.data.currently.time,
-	  				"temperature": response.data.currently.temperature
-	  			};
-	  			res.send(jsonResponse);
-	  		}, 
-	  		function error(error) {
-	  		res.send(error);
-	  	});
+  		try {
+  			getDataByCityLatLng(obj.latitude, obj.longitude)
+		  	.then(
+		  		function success(response) {
+		  			var jsonResponse = {
+		  				"time": response.data.currently.time,
+		  				"temperature": response.data.currently.temperature
+		  			};
+		  			res.send(jsonResponse);
+		  		}, 
+		  		function error(error) {
+		  		res.send(error);
+		  	});	
+  		} catch(err) {
+  			if(err.toString().indexOf('How unfortunate! The API Request Failed') > -1) {
+  				var tmsp = new Date();
+					client.hmset('api.errors', {
+						'tmsp': 'How unfortunate! The API Request Failed'
+					});
+				}
+  			res.status(400).send({'error': 'Call to API Failed!'});
+  		}
   	}
 	});
   
