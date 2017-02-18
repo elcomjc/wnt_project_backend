@@ -11,12 +11,27 @@ var client = redis.createClient(process.env.REDIS_URL);
 var forecastKey = process.env.forecastKey;
 // var forecastKey = config.forecastKey;
 
+var allowCrossDomain = function(req, res, next) {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+
+    // intercept OPTIONS method
+    if ('OPTIONS' == req.method) {
+      res.send(200);
+    }
+    else {
+      next();
+    }
+};
+
 // if an error occurs, print it to the console
 client.on('error', function (err) {
     console.log("Error " + err);
 });
 
 app.set('port', (process.env.PORT || 5000));
+app.use(allowCrossDomain);
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
